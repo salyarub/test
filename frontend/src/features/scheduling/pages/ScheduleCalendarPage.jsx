@@ -894,6 +894,8 @@ const ScheduleCalendarPage = () => {
                                 {/* Date Selection */}
                                 {(() => {
                                     const currentYear = new Date().getFullYear()
+                                    const currentMonth = new Date().getMonth()
+                                    const currentDay = new Date().getDate()
                                     const years = [currentYear, currentYear + 1]
                                     const months = Array.from({ length: 12 }, (_, i) => i)
                                     const monthNames = isRtl
@@ -902,25 +904,49 @@ const ScheduleCalendarPage = () => {
                                     const getDays = (year, month) => new Date(year, month + 1, 0).getDate()
                                     const updateDate = (field, part, val) => {
                                         const d = new Date(emergencyData[field])
-                                        if (part === 'year') d.setFullYear(val)
-                                        if (part === 'month') { d.setMonth(val); if (d.getDate() !== emergencyData[field].getDate()) d.setDate(0) }
+                                        if (part === 'year') {
+                                            d.setFullYear(val)
+                                            // If switching to current year and month is in past, snap to current month
+                                            if (val === currentYear && d.getMonth() < currentMonth) {
+                                                d.setMonth(currentMonth)
+                                                d.setDate(currentDay)
+                                            }
+                                        }
+                                        if (part === 'month') {
+                                            d.setMonth(val)
+                                            if (d.getDate() !== emergencyData[field].getDate()) d.setDate(0)
+                                            // If same year+month as today, snap day to today if in past
+                                            if (d.getFullYear() === currentYear && val === currentMonth && d.getDate() < currentDay) {
+                                                d.setDate(currentDay)
+                                            }
+                                        }
                                         if (part === 'day') d.setDate(val)
                                         setEmergencyData({ ...emergencyData, [field]: d })
                                     }
                                     const selClass = "h-10 px-2 border rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 dark:text-white text-sm flex-1 min-w-0"
                                     const renderDateDropdowns = (field) => {
                                         const d = emergencyData[field]
+                                        const selectedYear = d.getFullYear()
+                                        const selectedMonth = d.getMonth()
+                                        const minMonth = selectedYear === currentYear ? currentMonth : 0
+                                        const minDay = (selectedYear === currentYear && selectedMonth === currentMonth) ? currentDay : 1
                                         return (
                                             <div className="flex gap-1.5">
-                                                <select className={selClass} value={d.getFullYear()} onChange={e => updateDate(field, 'year', +e.target.value)}>
+                                                <select className={selClass} value={selectedYear} onChange={e => updateDate(field, 'year', +e.target.value)}>
                                                     {years.map(y => <option key={y} value={y}>{y}</option>)}
                                                 </select>
-                                                <select className={selClass} value={d.getMonth()} onChange={e => updateDate(field, 'month', +e.target.value)}>
-                                                    {months.map(m => <option key={m} value={m}>{monthNames[m]}</option>)}
+                                                <select className={selClass} value={selectedMonth} onChange={e => updateDate(field, 'month', +e.target.value)}>
+                                                    {months.map(m => (
+                                                        <option key={m} value={m} disabled={selectedYear === currentYear && m < currentMonth}>
+                                                            {monthNames[m]}
+                                                        </option>
+                                                    ))}
                                                 </select>
                                                 <select className={selClass} value={d.getDate()} onChange={e => updateDate(field, 'day', +e.target.value)}>
-                                                    {Array.from({ length: getDays(d.getFullYear(), d.getMonth()) }, (_, i) => i + 1).map(day => (
-                                                        <option key={day} value={day}>{day}</option>
+                                                    {Array.from({ length: getDays(selectedYear, selectedMonth) }, (_, i) => i + 1).map(day => (
+                                                        <option key={day} value={day} disabled={day < minDay}>
+                                                            {day}
+                                                        </option>
                                                     ))}
                                                 </select>
                                             </div>

@@ -699,12 +699,14 @@ const SecretarySchedulePage = () => {
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wider ml-1">{isRtl ? 'من' : 'From'}</Label>
                                     <Input type="date" className="pl-3 pr-3 h-11 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 transition-colors dark:text-white"
+                                        min={format(new Date(), 'yyyy-MM-dd')}
                                         value={format(emergencyData.start_date, 'yyyy-MM-dd')}
                                         onChange={e => setEmergencyData({ ...emergencyData, start_date: new Date(e.target.value) })} />
                                 </div>
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wider ml-1">{isRtl ? 'إلى' : 'To'}</Label>
                                     <Input type="date" className="pl-3 pr-3 h-11 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 transition-colors dark:text-white"
+                                        min={format(new Date(), 'yyyy-MM-dd')}
                                         value={format(emergencyData.end_date, 'yyyy-MM-dd')}
                                         onChange={e => setEmergencyData({ ...emergencyData, end_date: new Date(e.target.value) })} />
                                 </div>

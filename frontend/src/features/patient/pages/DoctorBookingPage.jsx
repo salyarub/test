@@ -107,8 +107,9 @@ const DoctorBookingPage = () => {
         },
         onSuccess: () => {
             setBookingSuccess(true)
-            queryClient.invalidateQueries(['myBookings'])
-            queryClient.invalidateQueries(['doctorSlots', doctorId])
+            queryClient.invalidateQueries({ queryKey: ['myBookings'] })
+            queryClient.invalidateQueries({ queryKey: ['myBookingsWithDoctor', doctorId] })
+            queryClient.invalidateQueries({ queryKey: ['doctorSlots', doctorId] })
             confetti({
                 particleCount: 100,
                 spread: 70,
