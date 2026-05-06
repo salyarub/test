@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import {
     Calendar, Users, Clock, CheckCircle, AlertCircle, XCircle,
     Loader2, Play, UserCog, CalendarCheck, CalendarX,
-    Shield, Bell, Settings, CalendarOff
+    Shield, Bell, Settings, CalendarOff, Pencil
 } from 'lucide-react'
 
 const StatCard = ({ title, value, icon: Icon, color = "text-primary", bgColor = "bg-primary/10" }) => (
@@ -118,6 +118,8 @@ const SecretaryDashboard = () => {
     const [selectedBookingId, setSelectedBookingId] = useState(null)
     const [walkinModalOpen, setWalkinModalOpen] = useState(false)
     const [walkinData, setWalkinData] = useState({ patient_name: '', patient_phone: '', notes: '' })
+    const [editWalkinModalOpen, setEditWalkinModalOpen] = useState(false)
+    const [editWalkinData, setEditWalkinData] = useState({ id: null, patient_name: '', patient_phone: '', notes: '' })
 
     // Fetch current user with permissions
     const { data: user } = useQuery({
@@ -128,11 +130,12 @@ const SecretaryDashboard = () => {
     const permissions = user?.permissions || []
     const hasPermission = (perm) => permissions.includes(perm)
 
-    // Fetch bookings
+    // Fetch bookings - Real-time polling
     const { data: bookings, isLoading: bookingsLoading } = useQuery({
         queryKey: ['secretaryBookings'],
         queryFn: async () => (await api.get('clinic/bookings/')).data,
-        enabled: hasPermission('manage_bookings') || hasPermission('patient_checkin')
+        enabled: hasPermission('manage_bookings') || hasPermission('patient_checkin'),
+        refetchInterval: 5000,
     })
 
     // Fetch doctor profile for editing
@@ -205,6 +208,22 @@ const SecretaryDashboard = () => {
         onError: (error) => toast.error(isRtl ? (error.response?.data?.error_ar || error.response?.data?.error) : (error.response?.data?.error || 'Failed'))
     })
 
+    const editWalkinMutation = useMutation({
+        mutationFn: async (data) => {
+            return await api.patch(`clinic/bookings/${data.id}/`, {
+                walkin_patient_name: data.patient_name,
+                walkin_patient_phone: data.patient_phone,
+                patient_notes: data.notes
+            })
+        },
+        onSuccess: () => {
+            toast.success(isRtl ? 'تم تحديث البيانات' : 'Data updated!')
+            queryClient.invalidateQueries(['secretaryBookings'])
+            setEditWalkinModalOpen(false)
+        },
+        onError: (e) => toast.error(e.response?.data?.error_ar || e.response?.data?.error || 'Failed')
+    })
+
     const handleCancelClick = (bookingId) => {
         setSelectedBookingId(bookingId)
         setCancelModalOpen(true)
@@ -244,6 +263,19 @@ const SecretaryDashboard = () => {
                 if (!canManage) return null
                 return (
                     <>
+                        {booking.is_walkin && (
+                            <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => {
+                                setEditWalkinData({
+                                    id: booking.id,
+                                    patient_name: booking.walkin_patient_name || '',
+                                    patient_phone: booking.walkin_patient_phone || '',
+                                    notes: booking.doctor_notes || ''
+                                })
+                                setEditWalkinModalOpen(true)
+                            }}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        )}
                         <Button size="sm" className="gap-1" onClick={() => confirmMutation.mutate(booking.id)} disabled={confirmMutation.isPending}>
                             <CheckCircle className="h-3 w-3" />{isRtl ? 'تأكيد' : 'Confirm'}
                         </Button>
@@ -593,9 +625,13 @@ const SecretaryDashboard = () => {
                                 <Label>{isRtl ? 'ملاحظات (اختياري)' : 'Notes (Optional)'}</Label>
                                 <Input
                                     value={walkinData.notes}
-                                    onChange={(e) => setWalkinData({ ...walkinData, notes: e.target.value })}
+                                    onChange={(e) => { if (e.target.value.length <= 50) setWalkinData({ ...walkinData, notes: e.target.value }) }}
                                     placeholder={isRtl ? 'أي ملاحظات إضافية' : 'Any additional notes'}
+                                    maxLength={50}
                                 />
+                                <span className={`text-[11px] mt-0.5 block ${walkinData.notes.length >= 45 ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+                                    {walkinData.notes.length}/50
+                                </span>
                             </div>
                         </div>
 
@@ -614,6 +650,64 @@ const SecretaryDashboard = () => {
                     </div>
                 </div>
             )}
+            {/* Edit Walk-in Modal */}
+            {
+                editWalkinModalOpen && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in">
+                        <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl animate-in zoom-in-95">
+                            <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                {isRtl ? 'تعديل بيانات الحضور' : 'Edit Walk-in Patient'}
+                            </h3>
+
+                            <div className="space-y-3 mb-4">
+                                <div>
+                                    <Label className="text-sm font-semibold">{isRtl ? 'اسم المريض *' : 'Patient Name *'}</Label>
+                                    <Input value={editWalkinData.patient_name} onChange={e => setEditWalkinData({ ...editWalkinData, patient_name: e.target.value })} className="mt-1 border-2 focus:ring-2 focus:ring-blue-400" />
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-semibold">{isRtl ? 'رقم الهاتف' : 'Phone'}</Label>
+                                    <Input value={editWalkinData.patient_phone} onChange={e => setEditWalkinData({ ...editWalkinData, patient_phone: e.target.value })} className="mt-1 border-2" />
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <Label className="text-sm font-semibold">{isRtl ? 'ملاحظات' : 'Notes'}</Label>
+                                        <span className={`text-xs ${editWalkinData.notes?.length > 50 ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                                            {editWalkinData.notes?.length || 0}/50
+                                        </span>
+                                    </div>
+                                    <textarea
+                                        value={editWalkinData.notes}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val.length <= 50) {
+                                                setEditWalkinData({ ...editWalkinData, notes: val });
+                                            }
+                                        }}
+                                        className="w-full rounded-md border-2 border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[80px]"
+                                        placeholder={isRtl ? "ملاحظات إضافية... (حد أقصى 50 حرف)" : "Additional notes... (max 50 chars)"}
+                                    />
+                                    {editWalkinData.notes?.length >= 50 && (
+                                        <p className="text-xs text-red-500 mt-1">{isRtl ? 'تم الوصول للحد الأقصى' : 'Maximum limit reached'}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <Button
+                                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                    onClick={() => editWalkinMutation.mutate(editWalkinData)}
+                                    disabled={editWalkinMutation.isPending || !editWalkinData.patient_name}
+                                >
+                                    {editWalkinMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (isRtl ? 'حفظ' : 'Save')}
+                                </Button>
+                                <Button variant="outline" onClick={() => { setEditWalkinModalOpen(false); setEditWalkinData({ id: null, patient_name: '', patient_phone: '', notes: '' }); }}>
+                                    {isRtl ? 'إلغاء' : 'Cancel'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </Layout>
     )
 }

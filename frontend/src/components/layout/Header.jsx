@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications'
 import {
     Globe,
     User,
@@ -33,6 +34,7 @@ const Header = () => {
     const token = localStorage.getItem('access_token')
 
     const { user, logout } = useAuth()
+    const { unreadCount } = useRealtimeNotifications()
 
     // Fallback if user is not fully loaded from context yet, though AuthProvider handles initial load
     // But since we use token to check isLoggedIn, we should rely on user object presence
@@ -142,7 +144,7 @@ const Header = () => {
                     {isLoggedIn ? (
                         <>
                             {navItems.map((item) => (
-                                <Link key={item.path} to={item.path}>
+                                <Link key={item.path} to={item.path} className="relative">
                                     <Button
                                         variant={isActive(item.path) ? "default" : "ghost"}
                                         size="sm"
@@ -151,6 +153,11 @@ const Header = () => {
                                         <item.icon className="h-4 w-4" />
                                         <span className="hidden lg:inline">{item.label}</span>
                                     </Button>
+                                    {item.icon === Bell && unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center animate-pulse shadow-lg">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
                                 </Link>
                             ))}
 

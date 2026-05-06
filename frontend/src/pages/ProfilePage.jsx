@@ -177,27 +177,27 @@ const ProfilePage = () => {
 
     return (
         <Layout>
-            <div className="max-w-2xl mx-auto space-y-6">
+            <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
 
                 {/* Hero Banner with Gradient */}
                 <div className="relative overflow-hidden rounded-2xl">
                     {/* Gradient Background */}
-                    <div className={`h-40 bg-gradient-to-br ${getRoleColor(user?.role)} relative`}>
+                    <div className={`h-28 sm:h-40 bg-gradient-to-br ${getRoleColor(user?.role)} relative`}>
                         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnYtNGgydjRoNHYyaC00djRoLTJ2LTR6bTAtMzBoLTJ2LTRoMlYwaDF2NGg0djJoLTR2NGgtMlY0em0tMzAgMGgtMnYtNGgyVjBoMnY0aDR2MmgtNHY0aC0yVjR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
                         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent"></div>
                     </div>
 
                     {/* Avatar overlapping the banner */}
-                    <div className="relative -mt-16 px-6 pb-6">
+                    <div className="relative -mt-12 sm:-mt-16 px-4 sm:px-6 pb-4 sm:pb-6">
                         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
                             {/* Large Avatar */}
-                            <div className={`h-28 w-28 rounded-2xl bg-gradient-to-br ${getRoleColor(user?.role)} flex items-center justify-center text-white text-4xl font-bold shadow-xl ring-4 ring-background shrink-0`}>
+                            <div className={`h-20 w-20 sm:h-28 sm:w-28 rounded-2xl bg-gradient-to-br ${getRoleColor(user?.role)} flex items-center justify-center text-white text-2xl sm:text-4xl font-bold shadow-xl ring-4 ring-background shrink-0`}>
                                 {initials || 'U'}
                             </div>
 
                             {/* Name & Role */}
                             <div className="flex-1 text-center sm:text-start pb-1">
-                                <h1 className="text-2xl font-bold tracking-tight">
+                                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
                                     {user?.first_name} {user?.last_name}
                                 </h1>
                                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1.5">

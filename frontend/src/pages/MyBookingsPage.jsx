@@ -43,14 +43,15 @@ const MyBookingsPage = () => {
         }
     }
 
-    // Fetch user's bookings from REAL database
+    // Fetch user's bookings from REAL database - Real-time polling
     const { data: bookings, isLoading, error } = useQuery({
         queryKey: ['myBookings'],
         queryFn: async () => {
             const res = await api.get('clinic/bookings/')
             // Handle both paginated and non-paginated responses
             return Array.isArray(res.data) ? res.data : (res.data.results || [])
-        }
+        },
+        refetchInterval: 5000,
     })
 
     // Fetch patient's existing ratings to check which doctors are already rated
@@ -65,7 +66,7 @@ const MyBookingsPage = () => {
         { id: 'CONFIRMED', label: isRtl ? 'المؤكدة' : 'Confirmed', statuses: ['CONFIRMED', 'IN_PROGRESS'], icon: CheckCircle, color: 'text-blue-600 bg-blue-100' },
         { id: 'PENDING', label: isRtl ? 'قيد الانتظار' : 'Pending', statuses: ['PENDING', 'RESCHEDULING_PENDING'], icon: Clock, color: 'text-yellow-600 bg-yellow-100' },
         { id: 'COMPLETED', label: isRtl ? 'المنجزة' : 'Completed', statuses: ['COMPLETED'], icon: CheckCircle, color: 'text-green-600 bg-green-100' },
-        { id: 'CANCELLED', label: isRtl ? 'الملغى' : 'Cancelled', statuses: ['CANCELLED', 'REJECTED'], icon: XCircle, color: 'text-red-600 bg-red-100' },
+        { id: 'CANCELLED', label: isRtl ? 'الملغى' : 'Cancelled', statuses: ['CANCELLED', 'REJECTED', 'NO_SHOW', 'EXPIRED'], icon: XCircle, color: 'text-red-600 bg-red-100' },
     ]
 
     // Handle potential stale cache (paginated object) vs new fetch (array)
@@ -73,8 +74,28 @@ const MyBookingsPage = () => {
         ? bookings
         : (bookings?.results || [])
 
+    // Helper: determine effective status (treat past active bookings correctly)
+    const getEffectiveStatus = (booking) => {
+        if (!booking || !booking.status) return booking?.status
+        const bookingDate = new Date(booking.booking_datetime)
+        bookingDate.setHours(23, 59, 59, 999) // End of booking day
+        const isPast = bookingDate < new Date()
+        
+        if (isPast) {
+            // Past PENDING/CONFIRMED → NO_SHOW (patient didn't show up)
+            if (['PENDING', 'CONFIRMED'].includes(booking.status)) {
+                return 'NO_SHOW'
+            }
+            // Past IN_PROGRESS → COMPLETED (doctor forgot to mark complete)
+            if (booking.status === 'IN_PROGRESS') {
+                return 'COMPLETED'
+            }
+        }
+        return booking.status
+    }
+
     const filteredBookings = safeBookings.filter(b =>
-        b && b.status && tabs.find(t => t.id === activeTab).statuses.includes(b.status)
+        b && b.status && tabs.find(t => t.id === activeTab).statuses.includes(getEffectiveStatus(b))
     )
 
     // Cancel booking mutation
@@ -174,6 +195,8 @@ const MyBookingsPage = () => {
             COMPLETED: { bg: 'bg-green-100 text-green-800', icon: CheckCircle, label: isRtl ? 'مكتمل' : 'Completed' },
             CANCELLED: { bg: 'bg-red-100 text-red-800', icon: XCircle, label: isRtl ? 'ملغي' : 'Cancelled' },
             RESCHEDULING_PENDING: { bg: 'bg-orange-100 text-orange-800', icon: AlertCircle, label: isRtl ? 'إعادة جدولة' : 'Rescheduling' },
+            NO_SHOW: { bg: 'bg-gray-100 text-gray-800', icon: XCircle, label: isRtl ? 'لم يحضر' : 'No Show' },
+            EXPIRED: { bg: 'bg-gray-100 text-gray-600', icon: Clock, label: isRtl ? 'منتهي' : 'Expired' },
         }
         const config = styles[status] || styles.PENDING
         const Icon = config.icon
@@ -187,10 +210,10 @@ const MyBookingsPage = () => {
 
     return (
         <Layout>
-            <div className="max-w-4xl mx-auto space-y-8">
+            <div className="max-w-4xl mx-auto space-y-4 sm:space-y-8">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold">{isRtl ? 'حجوزاتي' : 'My Bookings'}</h1>
-                    <p className="text-muted-foreground">{isRtl ? 'عرض جميع مواعيدك' : 'View all your appointments'}</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold">{isRtl ? 'حجوزاتي' : 'My Bookings'}</h1>
+                    <p className="text-muted-foreground text-sm sm:text-base">{isRtl ? 'عرض جميع مواعيدك' : 'View all your appointments'}</p>
                 </div>
 
                 {/* Tabs Navigation */}
@@ -203,7 +226,7 @@ const MyBookingsPage = () => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`
-                                    flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-all duration-200
+                                    flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200
                                     ${isActive
                                         ? 'bg-white text-primary shadow-sm ring-1 ring-black/5 dark:bg-gray-800 dark:text-gray-100'
                                         : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -214,7 +237,7 @@ const MyBookingsPage = () => {
                                 {tab.label}
                                 {safeBookings && (
                                     <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                        {safeBookings.filter(b => b && b.status && tab.statuses.includes(b.status)).length}
+                                        {safeBookings.filter(b => b && b.status && tab.statuses.includes(getEffectiveStatus(b))).length}
                                     </span>
                                 )}
                             </button>
@@ -268,14 +291,14 @@ const MyBookingsPage = () => {
                             if (!booking) return null
                             return (
                                 <Card key={booking.id} className="hover:shadow-md transition-shadow">
-                                    <CardContent className="p-6">
+                                    <CardContent className="p-4 sm:p-6">
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                             <div className="flex items-center gap-4">
                                                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                                                     <User className="h-6 w-6" />
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-semibold text-lg">
+                                                    <h3 className="font-semibold text-base sm:text-lg">
                                                         Dr. {booking.doctor_name || 'Doctor'}
                                                     </h3>
                                                     <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
@@ -300,10 +323,10 @@ const MyBookingsPage = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between md:justify-end gap-3 border-t md:border-t-0 pt-4 md:pt-0">
-                                                {getStatusBadge(booking.status)}
+                                                {getStatusBadge(getEffectiveStatus(booking))}
 
                                                 <div className="flex flex-wrap justify-end gap-2">
-                                                    {['PENDING', 'CONFIRMED'].includes(booking.status) && (() => {
+                                                    {['PENDING', 'CONFIRMED'].includes(getEffectiveStatus(booking)) && (() => {
                                                         const bookingTime = new Date(booking.booking_datetime)
                                                         const createdAt = new Date(booking.created_at)
                                                         const now = new Date()

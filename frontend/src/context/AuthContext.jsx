@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../lib/axios';
 import { jwtDecode } from 'jwt-decode';
 import { useQueryClient } from '@tanstack/react-query';
+import { resetNotificationTracking } from '../hooks/useRealtimeNotifications';
 
 const AuthContext = createContext();
 
@@ -56,6 +57,8 @@ export const AuthProvider = ({ children }) => {
         // CRITICAL: Clear all React Query cache to prevent data leaking between users
         queryClient.removeQueries();
         queryClient.clear();
+        // Reset notification tracking so new user starts fresh
+        resetNotificationTracking();
     };
 
     return (

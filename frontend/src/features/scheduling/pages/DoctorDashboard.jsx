@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
@@ -130,22 +130,24 @@ const DoctorDashboardNew = () => {
     const [cancelModalOpen, setCancelModalOpen] = useState(false)
     const [selectedBookingId, setSelectedBookingId] = useState(null)
 
-    // Fetch doctor's bookings
+    // Fetch doctor's bookings - Real-time polling
     const { data: bookings, isLoading: bookingsLoading } = useQuery({
         queryKey: ['doctorBookings'],
         queryFn: async () => {
             const res = await api.get('clinic/bookings/')
             return res.data
-        }
+        },
+        refetchInterval: 5000,
     })
 
-    // Fetch notifications count
+    // Fetch notifications count - Real-time polling
     const { data: notifications } = useQuery({
         queryKey: ['notifications'],
         queryFn: async () => {
             const res = await api.get('notifications/')
             return res.data
-        }
+        },
+        refetchInterval: 5000,
     })
 
     // Fetch user profile
@@ -219,7 +221,20 @@ const DoctorDashboardNew = () => {
     }
 
     const todayStr = format(new Date(), 'yyyy-MM-dd')
-    const todayBookings = bookings?.filter(b => b.booking_datetime?.startsWith(todayStr)) || []
+    const todayBookings = useMemo(() => {
+        if (!bookings) return []
+        return bookings
+            .filter(b => b.booking_datetime?.startsWith(todayStr))
+            .sort((a, b) => {
+                const aCancelled = a.status === 'CANCELLED'
+                const bCancelled = b.status === 'CANCELLED'
+                
+                if (aCancelled && !bCancelled) return 1
+                if (!aCancelled && bCancelled) return -1
+                
+                return new Date(a.booking_datetime) - new Date(b.booking_datetime)
+            })
+    }, [bookings, todayStr])
 
     const pendingBookings = todayBookings.filter(b => b.status === 'PENDING')
     const confirmedBookings = todayBookings.filter(b => b.status === 'CONFIRMED')

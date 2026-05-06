@@ -526,14 +526,23 @@ class DaySlotsView(views.APIView):
             end_date__gte=check_date
         ).exclude(start_time__isnull=True, end_time__isnull=True).exclude(status='CANCELLED').exclude(type='DIGITAL_UNAVAILABLE')
         
-        # Optimize: Pre-fetch all bookings for this day to avoid N+1 queries in loop
+        start_of_day = timezone.make_aware(datetime.combine(check_date, datetime.min.time()))
+        end_of_day = timezone.make_aware(datetime.combine(check_date, datetime.max.time()))
+        
         daily_bookings = Booking.objects.filter(
             doctor=doctor,
-            booking_datetime__date=check_date
-        ).exclude(status__in=['CANCELLED', 'EXPIRED']).values_list('booking_datetime', flat=True)
+            booking_datetime__gte=start_of_day,
+            booking_datetime__lte=end_of_day
+        ).exclude(status__in=['CANCELLED', 'EXPIRED']).values('booking_datetime', 'number_of_people')
         
-        from collections import Counter
-        bookings_counter = Counter(daily_bookings)
+        from collections import defaultdict
+        bookings_counter = defaultdict(int)
+        for b in daily_bookings:
+            dt = b['booking_datetime']
+            # Ensure we match exactly by removing microseconds if any
+            if hasattr(dt, 'replace'):
+                dt = dt.replace(microsecond=0)
+            bookings_counter[dt] += b.get('number_of_people', 1)
 
         slots = []
         last_slot_duration = 30  # Default

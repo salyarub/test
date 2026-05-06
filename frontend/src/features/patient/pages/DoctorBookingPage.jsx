@@ -614,7 +614,7 @@ const DoctorBookingPage = () => {
                 </div>
 
                 {/* ── Confirm Button ── */}
-                <div className="sticky bottom-4 bg-background/80 backdrop-blur-md p-4 rounded-2xl border shadow-xl">
+                <div className="sticky bottom-20 md:bottom-4 z-40 bg-background/80 backdrop-blur-md p-4 rounded-2xl border shadow-xl">
                     <Button
                         className={`w-full h-13 text-base rounded-xl font-semibold transition-all duration-300 ${selectedSlot && !hasActiveBooking
                             ? 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:opacity-90 text-white shadow-lg'

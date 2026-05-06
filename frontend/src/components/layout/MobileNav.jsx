@@ -2,6 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications'
 import {
     LayoutDashboard,
     Calendar,
@@ -24,6 +25,7 @@ const MobileNav = () => {
 
     // Use context auth
     const { user } = useAuth()
+    const { unreadCount } = useRealtimeNotifications()
 
     if (!token) return null
 
@@ -77,11 +79,12 @@ const MobileNav = () => {
             <div className="flex justify-around items-center h-16">
                 {navItems.map((item) => {
                     const active = isActive(item.path)
+                    const isNotifIcon = item.icon === Bell
                     return (
                         <Link
                             key={item.path}
                             to={item.path}
-                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-200 
+                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-200 relative
                                 ${active
                                     ? 'text-primary'
                                     : 'text-muted-foreground hover:text-gray-900 dark:hover:text-gray-100'}`}
@@ -90,6 +93,11 @@ const MobileNav = () => {
                                 <item.icon className={`h-5 w-5 ${active ? 'fill-current' : ''}`} strokeWidth={active ? 2.5 : 2} />
                             </div>
                             <span className="text-[10px] font-medium">{item.label}</span>
+                            {isNotifIcon && unreadCount > 0 && (
+                                <span className="absolute top-1 right-1/2 translate-x-3 h-4 w-4 bg-red-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow-lg">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                            )}
                         </Link>
                     )
                 })}

@@ -93,9 +93,9 @@ const RegisterPage = () => {
                     {/* Top gradient bar */}
                     <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
 
-                    <CardHeader className="text-center pb-2 pt-8">
-                        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-                            <UserPlus className="h-8 w-8 text-white" />
+                    <CardHeader className="text-center pb-2 pt-6 sm:pt-8">
+                        <div className="mx-auto mb-3 sm:mb-4 h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                            <UserPlus className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                         </div>
                         <CardTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                             {t('register.title')}
@@ -105,7 +105,7 @@ const RegisterPage = () => {
                         </CardDescription>
                     </CardHeader>
 
-                    <CardContent className="px-6 md:px-8 pb-8">
+                    <CardContent className="px-4 sm:px-6 md:px-8 pb-6 sm:pb-8">
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
                             {/* Role Selection */}
@@ -115,17 +115,17 @@ const RegisterPage = () => {
                                 </Label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div
-                                        className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-2.5 transition-all duration-300 ${selectedRole === 'DOCTOR'
+                                        className={`cursor-pointer rounded-xl border-2 p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-2.5 transition-all duration-300 ${selectedRole === 'DOCTOR'
                                             ? 'border-blue-500 bg-gradient-to-b from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/30 shadow-md shadow-blue-500/10'
                                             : 'border-muted hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'
                                             }`}
                                         onClick={() => setValue('role', 'DOCTOR')}
                                     >
-                                        <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors duration-300 ${selectedRole === 'DOCTOR'
+                                        <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center transition-colors duration-300 ${selectedRole === 'DOCTOR'
                                             ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
                                             : 'bg-muted text-muted-foreground'
                                             }`}>
-                                            <Stethoscope className="h-6 w-6" />
+                                            <Stethoscope className="h-5 w-5 sm:h-6 sm:w-6" />
                                         </div>
                                         <span className={`font-semibold text-sm transition-colors ${selectedRole === 'DOCTOR' ? 'text-blue-600 dark:text-blue-400' : ''
                                             }`}>
@@ -133,17 +133,17 @@ const RegisterPage = () => {
                                         </span>
                                     </div>
                                     <div
-                                        className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-2.5 transition-all duration-300 ${selectedRole === 'PATIENT'
+                                        className={`cursor-pointer rounded-xl border-2 p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-2.5 transition-all duration-300 ${selectedRole === 'PATIENT'
                                             ? 'border-blue-500 bg-gradient-to-b from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/30 shadow-md shadow-blue-500/10'
                                             : 'border-muted hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'
                                             }`}
                                         onClick={() => setValue('role', 'PATIENT')}
                                     >
-                                        <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors duration-300 ${selectedRole === 'PATIENT'
+                                        <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center transition-colors duration-300 ${selectedRole === 'PATIENT'
                                             ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
                                             : 'bg-muted text-muted-foreground'
                                             }`}>
-                                            <User className="h-6 w-6" />
+                                            <User className="h-5 w-5 sm:h-6 sm:w-6" />
                                         </div>
                                         <span className={`font-semibold text-sm transition-colors ${selectedRole === 'PATIENT' ? 'text-blue-600 dark:text-blue-400' : ''
                                             }`}>

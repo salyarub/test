@@ -54,7 +54,7 @@ const LandingPage = () => {
 
     return (
         <Layout>
-            <div className="flex flex-col items-center justify-center py-20 gap-16">
+            <div className="flex flex-col items-center justify-center py-10 sm:py-20 gap-8 sm:gap-16">
 
                 {/* Hero */}
                 <motion.div
@@ -65,26 +65,26 @@ const LandingPage = () => {
                 >
                     <motion.h1
                         variants={item}
-                        className="text-4xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 pb-2"
+                        className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 pb-2"
                     >
                         {isRtl ? 'نظام الجدولة الذكي' : 'Smart Rescheduling System'}
                     </motion.h1>
 
-                    <motion.p variants={item} className="text-xl text-muted-foreground">
+                    <motion.p variants={item} className="text-base sm:text-xl text-muted-foreground">
                         {isRtl
                             ? 'حل النزاعات تلقائيًا واقتراح فتحات بديلة دون عناء.'
                             : 'Automatically resolve booking conflicts and suggest alternative slots effortlessly.'}
                     </motion.p>
 
-                    <motion.div variants={item} className="flex gap-4 justify-center pt-4">
+                    <motion.div variants={item} className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4 w-full sm:w-auto">
                         <Link to="/doctor">
-                            <Button size="lg" className="rounded-full px-8 text-lg shadow-blue-500/25 shadow-xl h-12">
+                            <Button size="lg" className="rounded-full px-6 sm:px-8 text-base sm:text-lg shadow-blue-500/25 shadow-xl h-11 sm:h-12 w-full sm:w-auto">
                                 {isRtl ? 'لوحة الطبيب' : 'Doctor Dashboard'}
                             </Button>
                         </Link>
                         {/* Patient Experience Link */}
                         <Link to="/login">
-                            <Button size="lg" variant="outline" className="rounded-full px-8 text-lg h-12">
+                            <Button size="lg" variant="outline" className="rounded-full px-6 sm:px-8 text-base sm:text-lg h-11 sm:h-12 w-full sm:w-auto">
                                 {isRtl ? 'تجربة المريض' : 'Patient Demo'}
                             </Button>
                         </Link>
@@ -97,7 +97,7 @@ const LandingPage = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     viewport={{ once: true }}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full"
+                    className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 w-full"
                 >
                     <FeatureCard
                         icon={Calendar}

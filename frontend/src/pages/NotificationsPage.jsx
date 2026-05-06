@@ -26,13 +26,14 @@ const NotificationsPage = () => {
     const [rejectMode, setRejectMode] = useState('auto') // 'auto' or 'custom'
     const [customMessage, setCustomMessage] = useState('')
 
-    // Fetch real notifications from API
+    // Fetch real notifications from API - Real-time polling
     const { data: notifications, isLoading, error } = useQuery({
         queryKey: ['notifications'],
         queryFn: async () => {
             const res = await api.get('notifications/')
             return res.data
-        }
+        },
+        refetchInterval: 5000,
     })
 
     // Mark all as read mutation
@@ -447,11 +448,11 @@ const NotificationsPage = () => {
 
     return (
         <Layout>
-            <div className="max-w-2xl mx-auto space-y-8">
+            <div className="max-w-2xl mx-auto space-y-4 sm:space-y-8">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold">{isRtl ? 'الإشعارات' : 'Notifications'}</h1>
-                        <p className="text-muted-foreground">
+                        <h1 className="text-2xl sm:text-3xl font-bold">{isRtl ? 'الإشعارات' : 'Notifications'}</h1>
+                        <p className="text-muted-foreground text-sm sm:text-base">
                             {isRtl ? 'آخر التحديثات والتنبيهات' : 'Latest updates and alerts'}
                             {unreadCount > 0 && (
                                 <span className="ml-2 text-primary font-medium">

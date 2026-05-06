@@ -5,7 +5,6 @@ import Layout from '@/components/layout/Layout'
 import ProtectedRoute, { DoctorRoute, PatientRoute, SecretaryRoute, AdminRoute } from '@/components/ProtectedRoute'
 
 // Code Splitting - Public Pages
-// Code Splitting - Public Pages
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'))
 const LoginPage = React.lazy(() => import('@/pages/LoginPage'))
 const RegisterPage = React.lazy(() => import('@/pages/RegisterPage'))

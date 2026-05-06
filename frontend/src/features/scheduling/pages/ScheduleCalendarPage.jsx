@@ -13,7 +13,7 @@ import api from '@/lib/axios'
 import { toast } from 'sonner'
 import {
     Calendar, ChevronLeft, ChevronRight, Users, Clock, CheckCircle, XCircle,
-    Loader2, Play, Settings, UserPlus, Sparkles, AlertTriangle, Info
+    Loader2, Play, Settings, UserPlus, Sparkles, AlertTriangle, Info, Phone, FileText, Pencil
 } from 'lucide-react'
 
 import { useAuth } from '@/context/AuthContext'
@@ -29,6 +29,8 @@ const ScheduleCalendarPage = () => {
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [walkinModal, setWalkinModal] = useState(false)
     const [walkinData, setWalkinData] = useState({ patient_name: '', patient_phone: '', notes: '', selected_time: null })
+    const [editWalkinModalOpen, setEditWalkinModalOpen] = useState(false)
+    const [editWalkinData, setEditWalkinData] = useState({ id: null, patient_name: '', patient_phone: '', notes: '' })
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [emergencyModal, setEmergencyModal] = useState(false)
     const [leavesModal, setLeavesModal] = useState(false)
@@ -49,8 +51,8 @@ const ScheduleCalendarPage = () => {
     const { data: bookings, isLoading: bookingsLoading } = useQuery({
         queryKey: ['scheduleBookings'],
         queryFn: async () => (await api.get('clinic/bookings/')).data,
-        refetchInterval: 120000,
-        staleTime: 60000,
+        refetchInterval: 5000,
+        staleTime: 0,
     })
 
     // Fetch available slots for selected date when modal opens
@@ -99,6 +101,17 @@ const ScheduleCalendarPage = () => {
             const dateKey = format(new Date(booking.booking_datetime), 'yyyy-MM-dd')
             if (!grouped[dateKey]) grouped[dateKey] = []
             grouped[dateKey].push(booking)
+        })
+        Object.keys(grouped).forEach(key => {
+            grouped[key].sort((a, b) => {
+                const aCancelled = a.status === 'CANCELLED'
+                const bCancelled = b.status === 'CANCELLED'
+                
+                if (aCancelled && !bCancelled) return 1
+                if (!aCancelled && bCancelled) return -1
+                
+                return new Date(a.booking_datetime) - new Date(b.booking_datetime)
+            })
         })
         return grouped
     }, [bookings])
@@ -157,6 +170,22 @@ const ScheduleCalendarPage = () => {
             queryClient.invalidateQueries(['scheduleBookings'])
             setWalkinModal(false)
             setWalkinData({ patient_name: '', patient_phone: '', notes: '' })
+        },
+        onError: (e) => toast.error(e.response?.data?.error_ar || e.response?.data?.error || 'Failed')
+    })
+
+    const editWalkinMutation = useMutation({
+        mutationFn: async (data) => {
+            return await api.patch(`clinic/bookings/${data.id}/`, {
+                walkin_patient_name: data.patient_name,
+                walkin_patient_phone: data.patient_phone,
+                patient_notes: data.notes
+            })
+        },
+        onSuccess: () => {
+            toast.success(isRtl ? 'تم تحديث البيانات' : 'Data updated!')
+            queryClient.invalidateQueries(['scheduleBookings'])
+            setEditWalkinModalOpen(false)
         },
         onError: (e) => toast.error(e.response?.data?.error_ar || e.response?.data?.error || 'Failed')
     })
@@ -623,9 +652,39 @@ const ScheduleCalendarPage = () => {
                                                         </Badge>
                                                     )}
                                                 </div>
+                                                {/* Walk-in phone & notes */}
+                                                {booking.is_walkin && (booking.walkin_patient_phone || booking.doctor_notes) && (
+                                                    <div className="flex flex-col gap-1.5 mt-1.5">
+                                                        {booking.walkin_patient_phone && (
+                                                            <div className="flex items-center gap-1 text-xs text-green-700 dark:text-green-400">
+                                                                <Phone className="h-3 w-3" />
+                                                                <span dir="ltr">{booking.walkin_patient_phone}</span>
+                                                            </div>
+                                                        )}
+                                                        {booking.doctor_notes && (
+                                                            <div className="text-xs px-2.5 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                                                                <FileText className="h-3 w-3 inline-block mr-1 mb-0.5" />
+                                                                {booking.doctor_notes}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
+                                            {booking.is_walkin && (
+                                                <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => {
+                                                    setEditWalkinData({
+                                                        id: booking.id,
+                                                        patient_name: booking.walkin_patient_name || '',
+                                                        patient_phone: booking.walkin_patient_phone || '',
+                                                        notes: booking.doctor_notes || ''
+                                                    })
+                                                    setEditWalkinModalOpen(true)
+                                                }}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                             {booking.status === 'PENDING' && (
                                                 <>
                                                     <Button size="sm" onClick={() => confirmMutation.mutate(booking.id)} className="bg-blue-500 hover:bg-blue-600">
@@ -685,7 +744,10 @@ const ScheduleCalendarPage = () => {
                                     </div>
                                     <div>
                                         <Label className="text-sm font-semibold">{isRtl ? 'ملاحظات' : 'Notes'}</Label>
-                                        <Input value={walkinData.notes} onChange={e => setWalkinData({ ...walkinData, notes: e.target.value })} className="mt-1 border-2" />
+                                        <Input value={walkinData.notes} onChange={e => { if (e.target.value.length <= 50) setWalkinData({ ...walkinData, notes: e.target.value }) }} maxLength={50} className="mt-1 border-2" />
+                                        <span className={`text-[11px] mt-0.5 block ${walkinData.notes.length >= 45 ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+                                            {walkinData.notes.length}/50
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -696,11 +758,11 @@ const ScheduleCalendarPage = () => {
                                 {slotsLoading ? (
                                     <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-blue-500" /></div>
                                 ) : daySlots?.slots?.length === 0 ? (
-                                    <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                                    <div className="text-center py-4 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                         {isRtl ? 'لا توجد أوقات متاحة لهذا اليوم' : 'No slots available for this day'}
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-xl">
+                                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-800 rounded-xl">
                                         {daySlots?.slots?.map((slot, idx) => (
                                             <button
                                                 key={idx}
@@ -711,12 +773,12 @@ const ScheduleCalendarPage = () => {
                                                 ${walkinData.selected_time === slot.datetime
                                                         ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white border-transparent shadow-lg scale-105'
                                                         : slot.is_expired
-                                                            ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60'
+                                                            ? 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-400 cursor-not-allowed opacity-60'
                                                             : slot.is_overflow
-                                                                ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+                                                                ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50'
                                                                 : slot.is_full
-                                                                    ? 'bg-red-50 border-red-200 text-red-400 cursor-not-allowed opacity-50'
-                                                                    : 'bg-white border-gray-200 hover:border-blue-400 hover:bg-blue-50'
+                                                                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-400 cursor-not-allowed opacity-50'
+                                                                    : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:text-gray-200'
                                                     }
                                             `}
                                             >
@@ -730,7 +792,7 @@ const ScheduleCalendarPage = () => {
                                                 ) : (
                                                     <>
                                                         <div className="font-bold">{slot.time}</div>
-                                                        <div className="text-[10px] opacity-70">{`${slot.available}/${slot.max}`}</div>
+                                                        <div className="text-[10px] opacity-70">{`${slot.booked}/${slot.max}`}</div>
                                                     </>
                                                 )}
                                             </button>
@@ -740,10 +802,10 @@ const ScheduleCalendarPage = () => {
                             </div>
 
                             {walkinData.selected_time && (
-                                <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
-                                    <p className="text-sm font-semibold text-gray-700">
+                                <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                                         {isRtl ? 'الوقت المحدد:' : 'Selected Time:'}
-                                        <span className="text-blue-600 mx-2">{format(new Date(walkinData.selected_time), 'HH:mm')}</span>
+                                        <span className="text-blue-600 dark:text-blue-400 mx-2">{format(new Date(walkinData.selected_time), 'HH:mm')}</span>
                                     </p>
                                 </div>
                             )}
@@ -761,6 +823,65 @@ const ScheduleCalendarPage = () => {
                                     {walkinMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (isRtl ? 'إضافة' : 'Add Patient')}
                                 </Button>
                                 <Button variant="outline" onClick={() => { setWalkinModal(false); setWalkinData({ patient_name: '', patient_phone: '', notes: '', selected_time: null }); }}>
+                                    {isRtl ? 'إلغاء' : 'Cancel'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Edit Walk-in Modal */}
+            {
+                editWalkinModalOpen && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in">
+                        <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl animate-in zoom-in-95">
+                            <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                {isRtl ? 'تعديل بيانات الحضور' : 'Edit Walk-in Patient'}
+                            </h3>
+
+                            <div className="space-y-3 mb-4">
+                                <div>
+                                    <Label className="text-sm font-semibold">{isRtl ? 'اسم المريض *' : 'Patient Name *'}</Label>
+                                    <Input value={editWalkinData.patient_name} onChange={e => setEditWalkinData({ ...editWalkinData, patient_name: e.target.value })} className="mt-1 border-2 focus:ring-2 focus:ring-blue-400" />
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-semibold">{isRtl ? 'رقم الهاتف' : 'Phone'}</Label>
+                                    <Input value={editWalkinData.patient_phone} onChange={e => setEditWalkinData({ ...editWalkinData, patient_phone: e.target.value })} className="mt-1 border-2" />
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <Label className="text-sm font-semibold">{isRtl ? 'ملاحظات' : 'Notes'}</Label>
+                                        <span className={`text-xs ${editWalkinData.notes?.length > 50 ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                                            {editWalkinData.notes?.length || 0}/50
+                                        </span>
+                                    </div>
+                                    <textarea
+                                        value={editWalkinData.notes}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val.length <= 50) {
+                                                setEditWalkinData({ ...editWalkinData, notes: val });
+                                            }
+                                        }}
+                                        className="w-full rounded-md border-2 border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[80px]"
+                                        placeholder={isRtl ? "ملاحظات إضافية... (حد أقصى 50 حرف)" : "Additional notes... (max 50 chars)"}
+                                    />
+                                    {editWalkinData.notes?.length >= 50 && (
+                                        <p className="text-xs text-red-500 mt-1">{isRtl ? 'تم الوصول للحد الأقصى' : 'Maximum limit reached'}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <Button
+                                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                    onClick={() => editWalkinMutation.mutate(editWalkinData)}
+                                    disabled={editWalkinMutation.isPending || !editWalkinData.patient_name}
+                                >
+                                    {editWalkinMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (isRtl ? 'حفظ' : 'Save')}
+                                </Button>
+                                <Button variant="outline" onClick={() => { setEditWalkinModalOpen(false); setEditWalkinData({ id: null, patient_name: '', patient_phone: '', notes: '' }); }}>
                                     {isRtl ? 'إلغاء' : 'Cancel'}
                                 </Button>
                             </div>

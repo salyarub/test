@@ -39,15 +39,26 @@ class BookingViewSet(viewsets.ModelViewSet):
         ).order_by('-booking_datetime')
         
         from django.utils import timezone
+        from django.core.cache import cache
         
-        # Lazy update: mark any pending/confirmed bookings from past days as NO_SHOW
-        today = timezone.now().date()
-        past_active_bookings = Booking.objects.filter(
-            booking_datetime__date__lt=today,
-            status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED, Booking.Status.IN_PROGRESS]
-        )
-        if past_active_bookings.exists():
-            past_active_bookings.update(status=Booking.Status.NO_SHOW)
+        # Lazy update: auto-expire past bookings (runs max once per hour via cache)
+        cache_key = 'lazy_update_bookings_last_run'
+        if not cache.get(cache_key):
+            today = timezone.now().date()
+            
+            # PENDING/CONFIRMED → NO_SHOW (patient didn't show up)
+            Booking.objects.filter(
+                booking_datetime__date__lt=today,
+                status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED]
+            ).update(status=Booking.Status.NO_SHOW)
+            
+            # IN_PROGRESS → COMPLETED (exam started but doctor forgot to mark complete)
+            Booking.objects.filter(
+                booking_datetime__date__lt=today,
+                status=Booking.Status.IN_PROGRESS
+            ).update(status=Booking.Status.COMPLETED)
+            
+            cache.set(cache_key, True, 3600)  # Cache for 1 hour
 
         if user.role == User.Role.DOCTOR:
             return base_qs.filter(doctor__user=user)
@@ -96,13 +107,20 @@ class BookingViewSet(viewsets.ModelViewSet):
             # Lazy update first to ensure we don't block on yesterday's missed appointments
             from django.utils import timezone
             today = timezone.now().date()
-            past_active = Booking.objects.filter(
+            past_pending = Booking.objects.filter(
                 patient=patient,
                 booking_datetime__date__lt=today,
-                status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED, Booking.Status.IN_PROGRESS]
+                status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED]
             )
-            if past_active.exists():
-                past_active.update(status=Booking.Status.NO_SHOW)
+            if past_pending.exists():
+                past_pending.update(status=Booking.Status.NO_SHOW)
+            
+            # Auto-complete past IN_PROGRESS
+            Booking.objects.filter(
+                patient=patient,
+                booking_datetime__date__lt=today,
+                status=Booking.Status.IN_PROGRESS
+            ).update(status=Booking.Status.COMPLETED)
 
             # Check for any active booking with this doctor today or in the future
             # Patient can only have ONE active booking with a doctor at any time

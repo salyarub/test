@@ -114,9 +114,9 @@ const LoginPage = () => {
                 <Card className="relative w-full max-w-lg shadow-2xl border-0 bg-card dark:border dark:border-border overflow-hidden">
                     <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
 
-                    <CardHeader className="text-center pb-2 pt-8">
-                        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-                            <LogIn className="h-8 w-8 text-white" />
+                    <CardHeader className="text-center pb-2 pt-6 sm:pt-8">
+                        <div className="mx-auto mb-3 sm:mb-4 h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                            <LogIn className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                         </div>
                         <CardTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                             {t('login.title')}
@@ -125,7 +125,7 @@ const LoginPage = () => {
                             {t('login.subtitle')}
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="px-6 md:px-8 pb-8">
+                    <CardContent className="px-4 sm:px-6 md:px-8 pb-6 sm:pb-8">
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
                             <div className="space-y-1.5">

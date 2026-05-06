@@ -175,10 +175,10 @@ const RatingsPage = () => {
 
     return (
         <Layout>
-            <div className="max-w-4xl mx-auto space-y-8">
+            <div className="max-w-4xl mx-auto space-y-4 sm:space-y-8">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold">{isRtl ? 'التقييمات' : 'Ratings'}</h1>
-                    <p className="text-muted-foreground">{isRtl ? 'قيّم أطباءك' : 'Rate your doctors'}</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold">{isRtl ? 'التقييمات' : 'Ratings'}</h1>
+                    <p className="text-muted-foreground text-sm sm:text-base">{isRtl ? 'قيّم أطباءك' : 'Rate your doctors'}</p>
                 </div>
 
                 {isLoading ? (
@@ -192,7 +192,7 @@ const RatingsPage = () => {
                                 </h2>
                                 {pendingRatings.map(booking => (
                                     <Card key={booking.id} className="border-yellow-200 bg-yellow-50/50">
-                                        <CardContent className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                        <CardContent className="p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4">
                                             <div className="flex items-center gap-4">
                                                 <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700">
                                                     <User className="h-6 w-6" />
@@ -224,7 +224,7 @@ const RatingsPage = () => {
                             ) : (
                                 ratings.map(rating => (
                                     <Card key={rating.id}>
-                                        <CardContent className="p-6">
+                                        <CardContent className="p-4 sm:p-6">
                                             <div className="flex items-start gap-4">
                                                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                                     <User className="h-6 w-6" />

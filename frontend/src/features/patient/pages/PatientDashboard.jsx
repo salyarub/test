@@ -64,30 +64,30 @@ const PatientDashboard = () => {
         <Layout>
             <div className="space-y-8">
                 {/* Hero Header */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 sm:p-12 text-white">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-5 sm:p-8 md:p-12 text-white">
                     <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnYtNGgydjRoNHYyaC00djRoLTJ2LTR6bTAtMzBoLTJ2LTRoMlYwaDF2NGg0djJoLTR2NGgtMlY0em0tMzAgMGgtMnYtNGgyVjBoMnY0aDR2MmgtNHY0aC0yVjR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
-                    <Stethoscope className="absolute top-6 right-8 h-32 w-32 text-white/10" />
+                    <Stethoscope className="absolute top-6 right-8 h-20 w-20 sm:h-32 sm:w-32 text-white/10" />
 
                     <div className="relative z-10 text-center max-w-2xl mx-auto">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-sm font-medium mb-4">
                             <Sparkles className="h-4 w-4" />
                             {isRtl ? 'أفضل الأطباء' : 'Top Doctors'}
                         </div>
-                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-1 sm:mb-2">
                             {isRtl ? 'ابحث عن طبيبك' : 'Find Your Doctor'}
                         </h1>
-                        <p className="text-white/80 mb-6">
+                        <p className="text-white/80 text-sm sm:text-base mb-4 sm:mb-6">
                             {isRtl ? 'اختر طبيبك واحجز موعدك بسهولة وسرعة' : 'Choose your doctor and book an appointment easily'}
                         </p>
 
                         {/* Search Bar & Filters */}
-                        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row gap-3 relative">
+                        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row gap-2 sm:gap-3 relative">
                             <div className="relative flex-1">
                                 <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <Input
                                     type="text"
                                     placeholder={isRtl ? "ابحث بالاسم..." : "Search by name..."}
-                                    className="ps-12 h-14 text-base rounded-2xl bg-background text-foreground shadow-xl border-0 focus-visible:ring-2 focus-visible:ring-white/30 w-full"
+                                    className="ps-12 h-12 sm:h-14 text-sm sm:text-base rounded-2xl bg-background text-foreground shadow-xl border-0 focus-visible:ring-2 focus-visible:ring-white/30 w-full"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
@@ -96,7 +96,7 @@ const PatientDashboard = () => {
                                 <select
                                     value={selectedSpecialty}
                                     onChange={(e) => setSelectedSpecialty(e.target.value)}
-                                    className="h-14 w-full rounded-2xl border-0 bg-background text-foreground shadow-xl px-4 appearance-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 cursor-pointer text-base"
+                                    className="h-12 sm:h-14 w-full rounded-2xl border-0 bg-background text-foreground shadow-xl px-4 appearance-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 cursor-pointer text-sm sm:text-base"
                                 >
                                     <option value="">{isRtl ? 'التخصص (الكل)' : 'Specialty (All)'}</option>
                                     {MEDICAL_SPECIALTIES.map((spec) => (
@@ -131,7 +131,7 @@ const PatientDashboard = () => {
 
                 {/* Doctors Grid */}
                 {isLoading ? (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {[1, 2, 3, 4, 5, 6].map(i => (
                             <div key={i} className="rounded-2xl border bg-card p-6 animate-pulse space-y-4">
                                 <div className="flex items-center gap-4">
@@ -146,7 +146,7 @@ const PatientDashboard = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {displayDoctors.map((doctor, idx) => {
                             const color = cardColors[idx % cardColors.length]
                             return (

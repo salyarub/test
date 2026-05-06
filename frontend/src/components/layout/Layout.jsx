@@ -9,7 +9,7 @@ const Layout = ({ children }) => {
             <div className="pt-16">
                 <VerificationBanner />
             </div>
-            <main className="container flex-1 py-8 md:pb-12">
+            <main className="container flex-1 py-4 pb-24 md:py-8 md:pb-12">
                 {children}
             </main>
             <MobileNav />
